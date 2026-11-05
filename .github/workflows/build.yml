@@ -1,0 +1,29 @@
+name: Build QuickPalette
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/build.yml'
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Publish single-file Windows app
+        run: dotnet publish src/QuickPalette/QuickPalette.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
+      - name: Package
+        run: Compress-Archive -Path publish/* -DestinationPath QuickPalette-win-x64.zip
+        shell: pwsh
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickPalette-win-x64
+          path: QuickPalette-win-x64.zip
+          retention-days: 14
